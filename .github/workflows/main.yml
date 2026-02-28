@@ -1,0 +1,35 @@
+name: Run ETF Report Daily
+
+on:
+  schedule:
+    - cron: '30 11 * * 1-5' # 한국시간 오후 8시 30분 (UTC 11:30)
+  workflow_dispatch: # 수동으로 실행해볼 수 있는 버튼
+
+jobs:
+  run_script:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 서버가 결과물을 저장소에 쓸 수 있게 허용
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run analysis
+        run: python etf_script.py
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update Report $(date +%Y-%m-%d)" || exit 0
+          git push
